@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to Jasig under one or more contributor license
+    agreements. See the NOTICE file distributed with this work
+    for additional information regarding copyright ownership.
+    Jasig licenses this file to you under the Apache License,
+    Version 2.0 (the "License"); you may not use this file
+    except in compliance with the License.  You may obtain a
+    copy of the License at the following location:
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+    spring mvc的启动类配置
+    该文件是Cas Server使用到的Spring MVC的配置文件，里面定义了一些Controller及View相关的内容
+-->
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:webflow="http://www.springframework.org/schema/webflow-config"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:c="http://www.springframework.org/schema/c"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+       http://www.springframework.org/schema/webflow-config http://www.springframework.org/schema/webflow-config/spring-webflow-config-2.3.xsd">
+
+    <import resource="spring-configuration/propertyFileConfigurer.xml"/>
+
+    <!-- Theme Resolver -->
+    <bean id="themeResolver" class="org.jasig.cas.services.web.ServiceThemeResolver"
+          p:defaultThemeName="${cas.themeResolver.defaultThemeName}"
+          p:argumentExtractors-ref="argumentExtractors"
+          p:servicesManager-ref="servicesManager">
+        <property name="mobileBrowsers">
+            <util:map>
+                <entry key=".*iPhone.*" value="iphone"/>
+                <entry key=".*Android.*" value="iphone"/>
+                <entry key=".*Safari.*Pre.*" value="iphone"/>
+                <entry key=".*Nokia.*AppleWebKit.*" value="iphone"/>
+            </util:map>
+        </property>
+    </bean>
+
+
+    <!-- Locale Resolver -->
+    <bean id="localeResolver" class="org.springframework.web.servlet.i18n.CookieLocaleResolver" p:defaultLocale="en"/>
+
+    <bean id="localeChangeInterceptor" class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor"/>
+
+    <bean id="urlBasedViewResolver" class="org.springframework.web.servlet.view.UrlBasedViewResolver"
+          p:viewClass="org.springframework.web.servlet.view.InternalResourceView"
+          p:prefix="/WEB-INF/view/jsp/"
+          p:suffix=".jsp"
+          p:order="1"/>
+
+    <!-- Spring Web Flow 流执行异常解析器 -->
+    <bean id="errorHandlerResolver" class="org.jasig.cas.web.FlowExecutionExceptionResolver"/>
+
+    <!-- 简单控制器处理程序适配器 -->
+    <bean class="org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter"/>
+
+    <!-- Url文件名视图控制器 -->
+    <bean id="passThroughController" class="org.springframework.web.servlet.mvc.UrlFilenameViewController"/>
+
+    <!-- 简单的Url处理程序映射 -->
+    <bean id="handlerMappingC" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping"
+            p:alwaysUseFullPath="true">
+        <property name="mappings">
+            <util:properties>
+                <prop key="/serviceValidate">serviceValidateController</prop>
+                <prop key="/proxyValidate">proxyValidateController</prop>
+
+                <prop key="/p3/serviceValidate">v3ServiceValidateController</prop>
+                <prop key="/p3/proxyValidate">v3ProxyValidateController</prop>
+
+                <prop key="/validate">legacyValidateController</prop>
+                <prop key="/proxy">proxyController</prop>
+                <prop key="/authorizationFailure.html">passThroughController</prop>
+                <prop key="/status">healthCheckController</prop>
+                <prop key="/statistics">statisticsController</prop>
+            </util:properties>
+        </property>
+        <!--
+         uncomment this to enable sending PageRequest events.
+         <property
+           name="interceptors">
+           <list>
+             <ref bean="pageRequestHandlerInterceptorAdapter" />
+           </list>
+         </property>
+          -->
+    </bean>
+
+
+
+    <!-- 登录转换服务 -->
+    <bean id="logoutConversionService" class="org.jasig.cas.web.flow.LogoutConversionService"/>
+
+    <!-- 终止网络会话监听器 -->
+    <bean id="terminateWebSessionListener" class="org.jasig.cas.web.flow.TerminateWebSessionListener"/>
+
+    <!-- View Resolver（创建资源视图解析器） -->
+    <bean id="viewResolver" class="org.springframework.web.servlet.view.ResourceBundleViewResolver"
+          p:order="0">
+        <property name="basenames">
+            <util:list>
+                <value>${cas.viewResolver.basename}</value>
+                <value>protocol_views</value>
+            </util:list>
+        </property>
+    </bean>
+
+    <!-- 创建一个视图工厂，用于渲染视图
+        viewResolvers：指定视图解析器 -->
+    <bean id="viewFactoryCreator" class="org.springframework.webflow.mvc.builder.MvcViewFactoryCreator">
+        <property name="viewResolvers">
+            <util:list>
+                <ref local="viewResolver"/>
+            </util:list>
+        </property>
+    </bean>
+
+    <!-- 创建Spring Web Flow 的 EL 表达式解析器
+        conversionService-ref：转换服务 -->
+    <bean id="expressionParser" class="org.springframework.webflow.expression.spel.WebFlowSpringELExpressionParser"
+          c:conversionService-ref="logoutConversionService">
+        <constructor-arg>
+            <bean class="org.springframework.expression.spel.standard.SpelExpressionParser"/>
+        </constructor-arg>
+    </bean>
+
+
+    <!-- 配置登录 Spring Web Flow **** start -->
+
+    <!-- 1、配置一个webflow的定义，如果path匹配
+        view-factory-creator：指定视图工厂
+        expression-parser：指定表达式解析器 -->
+    <webflow:flow-builder-services id="builder" view-factory-creator="viewFactoryCreator" expression-parser="expressionParser"/>
+
+
+    <!-- 2、配置流程注册表，作用：加载流程定义文件。
+        id：代表请求URL 例：/login
+        path：关联对应的流程定义文件
+        也可以 <flow:flow-location-pattern value="/**/*-flow.xml" /> 通配批量加载 -->
+    <webflow:flow-registry id="loginFlowRegistry" flow-builder-services="builder">
+        <webflow:flow-location path="/WEB-INF/login-webflow.xml" id="login"/>
+    </webflow:flow-registry>
+
+
+    <!-- 3、配置 处理流程请求的 FlowHandlerMappin，它的工作仅仅是将流程请求定向到Spring Web Flow
+        p:flowRegistry-ref：指定流程注册表
+        interceptors:指定拦截器
+        login webflow configuration -->
+    <bean id="loginFlowHandlerMapping" class="org.springframework.webflow.mvc.servlet.FlowHandlerMapping"
+          p:flowRegistry-ref="loginFlowRegistry" p:order="2">
+        <property name="interceptors">
+            <ref local="localeChangeInterceptor"/>
+        </property>
+    </bean>
+
+
+    <!-- 4、配置流程执行器，部署流程的执行者（根据工作流定义，生成一个执行器）
+        id：配置执行器唯一标识名
+        flow-registry：指定流程注册表
+        always-redirect-on-pause：流程执行总是重定向后暂停
+        redirect-in-same-state：流程执行重定向后暂停留在相同的视图状态的转换，
+            这个属性有效覆盖“always-redirect-on-pause”属性的值相同tranisitions（转移）状态
+        flow-execution-listeners：注册侦听器，观察由该执行器启动的流程执行的生命周期
+        listener：注册一个侦听器观察执行一个或多个流程的生命周期 -->
+    <webflow:flow-executor id="loginFlowExecutor" flow-registry="loginFlowRegistry">
+        <webflow:flow-execution-attributes>
+            <webflow:always-redirect-on-pause value="false"/>
+            <webflow:redirect-in-same-state value="false"/>
+        </webflow:flow-execution-attributes>
+        <webflow:flow-execution-listeners>
+            <webflow:listener ref="terminateWebSessionListener"/>
+        </webflow:flow-execution-listeners>
+    </webflow:flow-executor>
+
+
+    <!-- 5、配置响应请求的 FlowHandlerAdapter，等同于Spring MVC的控制器，会对流程请求进行响应并处理。FlowHandlerAdapter -->
+    <bean id="loginFlowUrlHandler" class="org.jasig.cas.web.flow.CasDefaultFlowUrlHandler"/>
+    <bean id="loginHandlerAdapter" class="org.jasig.cas.web.flow.SelectiveFlowHandlerAdapter"
+          p:supportedFlowId="login" p:flowExecutor-ref="loginFlowExecutor" p:flowUrlHandler-ref="loginFlowUrlHandler"/>
+
+    <!-- 配置登录 Spring Web Flow **** end -->
+
+
+
+    <!-- 配置登出 Spring Web Flow **** srart -->
+
+    <webflow:flow-registry id="logoutFlowRegistry" flow-builder-services="builder">
+        <webflow:flow-location path="/WEB-INF/logout-webflow.xml" id="logout"/>
+    </webflow:flow-registry>
+
+    <!-- logout webflow configuration -->
+    <bean id="logoutFlowHandlerMapping" class="org.springframework.webflow.mvc.servlet.FlowHandlerMapping"
+          p:flowRegistry-ref="logoutFlowRegistry" p:order="3">
+        <property name="interceptors">
+            <ref local="localeChangeInterceptor"/>
+        </property>
+    </bean>
+
+    <webflow:flow-executor id="logoutFlowExecutor" flow-registry="logoutFlowRegistry">
+        <webflow:flow-execution-attributes>
+            <webflow:always-redirect-on-pause value="false"/>
+            <webflow:redirect-in-same-state value="false"/>
+        </webflow:flow-execution-attributes>
+        <webflow:flow-execution-listeners>
+            <webflow:listener ref="terminateWebSessionListener"/>
+        </webflow:flow-execution-listeners>
+    </webflow:flow-executor>
+
+    <bean id="logoutFlowUrlHandler" class="org.jasig.cas.web.flow.CasDefaultFlowUrlHandler"
+          p:flowExecutionKeyParameter="RelayState"/>
+
+    <bean id="logoutHandlerAdapter" class="org.jasig.cas.web.flow.SelectiveFlowHandlerAdapter"
+          p:supportedFlowId="logout" p:flowExecutor-ref="logoutFlowExecutor"
+          p:flowUrlHandler-ref="logoutFlowUrlHandler"/>
+
+    <!-- 配置登出 Spring Web Flow **** end -->
+
+
+
+    <!--  CAS 2 协议服务/代理验证 -->
+
+    <!-- CAS 2 摘要证控制器 -->
+    <bean id="abstractValidateController" class="org.jasig.cas.web.ServiceValidateController" abstract="true"
+          p:centralAuthenticationService-ref="centralAuthenticationService"
+          p:proxyHandler-ref="proxy20Handler"
+          p:argumentExtractor-ref="casArgumentExtractor"/>
+
+    <!-- CAS 2 代理验证控制器 -->
+    <bean id="proxyValidateController" parent="abstractValidateController"/>
+
+    <!-- CAS 2 服务验证控制器 p:validationSpecificationClass：验证规范类 -->
+    <bean id="serviceValidateController" parent="abstractValidateController"
+          p:validationSpecificationClass="org.jasig.cas.validation.Cas20WithoutProxyingValidationSpecification"/>
+
+    <!--  CAS 3 协议服务/属性的代理验证 -->
+
+    <!-- CAS 3 摘要证控制器 -->
+    <bean id="v3AbstractValidateController" parent="abstractValidateController" abstract="true"
+          p:successView="cas3ServiceSuccessView"
+          p:failureView="cas3ServiceFailureView"/>
+
+    <!-- CAS 3 代理验证控制器 -->
+    <bean id="v3ProxyValidateController" parent="v3AbstractValidateController"/>
+
+    <!-- CAS 3 服务验证控制器 p:validationSpecificationClass：验证规范类 -->
+    <bean id="v3ServiceValidateController" parent="v3AbstractValidateController"
+          p:validationSpecificationClass="org.jasig.cas.validation.Cas20WithoutProxyingValidationSpecification"/>
+
+    <!--  CAS 1 传统验证 -->
+    <!-- 传统的控制器的验证 -->
+    <bean id="legacyValidateController" parent="abstractValidateController"
+          p:proxyHandler-ref="proxy10Handler"
+          p:successView="cas1ServiceSuccessView"
+          p:failureView="cas1ServiceFailureView"
+          p:validationSpecificationClass="org.jasig.cas.validation.Cas10ProtocolValidationSpecification"/>
+
+    <!-- 代理控制器 -->
+    <bean id="proxyController" class="org.jasig.cas.web.ProxyController"
+          p:centralAuthenticationService-ref="centralAuthenticationService"/>
+
+    <!-- 统计控制器 -->
+    <bean id="statisticsController" class="org.jasig.cas.web.StatisticsController"
+          p:casTicketSuffix="${host.name}" c:ticketRegistry-ref="ticketRegistry"/>
+
+    <!-- 登出Action -->
+    <bean id="logoutAction" class="org.jasig.cas.web.flow.LogoutAction"
+          p:servicesManager-ref="servicesManager"
+          p:followServiceRedirects="${cas.logout.followServiceRedirects:false}"/>
+
+    <!-- 注销Action -->
+    <bean id="frontChannelLogoutAction" class="org.jasig.cas.web.flow.FrontChannelLogoutAction"
+          c:logoutManager-ref="logoutManager"/>
+
+    <!-- 健康检查控制器 -->
+    <bean id="healthCheckController" class="org.jasig.cas.web.HealthCheckController"
+          p:healthCheckMonitor-ref="healthCheckMonitor"/>
+
+    <!-- 初始流程设置Action -->
+    <bean id="initialFlowSetupAction" class="org.jasig.cas.web.flow.InitialFlowSetupAction"
+          p:argumentExtractors-ref="argumentExtractors"
+          p:warnCookieGenerator-ref="warnCookieGenerator"
+          p:ticketGrantingTicketCookieGenerator-ref="ticketGrantingTicketCookieGenerator"/>
+
+    <!-- 通过表单验证Action -->
+    <bean id="authenticationViaFormAction" class="org.jasig.cas.web.flow.AuthenticationViaFormAction"
+          p:centralAuthenticationService-ref="centralAuthenticationService"
+          p:warnCookieGenerator-ref="warnCookieGenerator"
+          p:ticketRegistry-ref="ticketRegistry"/>
+
+    <!-- 身份验证异常处理 -->
+    <bean id="authenticationExceptionHandler" class="org.jasig.cas.web.flow.AuthenticationExceptionHandler"/>
+
+    <!-- 生成 Ticket Action -->
+    <bean id="generateServiceTicketAction" class="org.jasig.cas.web.flow.GenerateServiceTicketAction"
+          p:centralAuthenticationService-ref="centralAuthenticationService"/>
+
+    <!-- 发送 Ticket Action -->
+    <bean id="sendTicketGrantingTicketAction" class="org.jasig.cas.web.flow.SendTicketGrantingTicketAction"
+          p:centralAuthenticationService-ref="centralAuthenticationService"
+          p:ticketGrantingTicketCookieGenerator-ref="ticketGrantingTicketCookieGenerator"/>
+
+    <!-- 网关服务管理检查 -->
+    <bean id="gatewayServicesManagementCheck" class="org.jasig.cas.web.flow.GatewayServicesManagementCheck"
+          c:servicesManager-ref="servicesManager"/>
+
+    <!-- 服务授权检查 -->
+    <bean id="serviceAuthorizationCheck" class="org.jasig.cas.web.flow.ServiceAuthorizationCheck"
+          c:servicesManager-ref="servicesManager"/>
+
+    <!-- 生成登录 Ticket Action -->
+    <bean id="generateLoginTicketAction" class="org.jasig.cas.web.flow.GenerateLoginTicketAction"
+          p:ticketIdGenerator-ref="loginTicketUniqueIdGenerator"/>
+
+    <!-- Spring 消息拦截器 -->
+    <bean id="messageInterpolator" class="org.jasig.cas.util.SpringAwareMessageMessageInterpolator"/>
+
+    <!-- 本地工厂凭证验证 -->
+    <bean id="credentialsValidator" class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean"
+          p:messageInterpolator-ref="messageInterpolator"/>
+
+    <!-- Ticket 授 Ticket 检查 Action -->
+    <bean id="ticketGrantingTicketCheckAction" class="org.jasig.cas.web.flow.TicketGrantingTicketCheckAction"
+          c:registry-ref="ticketRegistry"/>
+
+    <!-- 会话终止 Action -->
+    <bean id="terminateSessionAction" class="org.jasig.cas.web.flow.TerminateSessionAction"
+          c:cas-ref="centralAuthenticationService"
+          c:tgtCookieGenerator-ref="ticketGrantingTicketCookieGenerator"
+          c:warnCookieGenerator-ref="warnCookieGenerator"/>
+</beans>
