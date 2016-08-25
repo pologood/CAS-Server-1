@@ -828,6 +828,8 @@
         <module>cas-server-extension-clearpass</module>
         <module>cas-server-integration-ehcache</module>
         <module>cas-server-integration-restlet</module>
+        <module>cas-server-support-jdbc</module>
+        <module>cas-server-support-oauth</module>
         <module>cas-server-webapp</module>
         <module>cas-server-webapp-support</module>
     </modules>

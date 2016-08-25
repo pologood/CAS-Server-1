@@ -15,6 +15,12 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * 配置位置 deployerConfigContext.xml
+ * 主要涉及方法 Principal resolve(Credential credential);
+ * 通过解析AuthenticationHandler(处理器)处理认证通过的Credential(认证凭证)，构建Principal（认证结果）
+ * 在4.0中可以不配置 AuthenticationHandler 对应的 PrincipalResolver，这样，
+ * 程序会调用 AuthenticationHandler 处理结果中 HandlerResult 的
  */
 package org.jasig.cas.authentication.principal;
 

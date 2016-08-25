@@ -15,6 +15,16 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * 配置位置 deployerConfigContext.xml
+ * 主要涉及的方法是Authentication authenticate(final Credential... credentials)
+ * 以及在authenticate方法中调用的AuthenticationBuilder authenticateInternal(final Credential... credentials)
+ *
+ * 身份认证管理器，通过指定认证凭证的认证处理程序来定义认证的安全策略。
+ *      3.5的时候实现类是 org.jasig.cas.authentication.AuthenticationManagerImpl，
+ *      4.0变为org.jasig.cas.authentication.PolicyBasedAuthenticationManager，
+ *      这是3.5和4.0改变最大的原因。没有改造的必要，
+ *      如果debug看代码从PolicyBasedAuthenticationManager的Authentication authenticate(final Credential... credentials) 方法开始
  */
 package org.jasig.cas.authentication;
 

@@ -15,6 +15,16 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * 配置位置 deployerConfigContext.xml
+ * 主要涉及方法 String getName(); boolean supports(Credential credential) 判断是否由该AuthenticationHandler处理
+ *      HandlerResult authenticate(Credential credential) 传入封装好的
+ *
+ *       AuthenticationManager通过委托AuthenticationHandler(处理器)处理Credential(认证凭证)。认证该组件提供身份认证在您的环境中使用的各类证件
+ *       注意:(1)每个处理器都需要一个唯一的名称
+ *       (2)不同于3.5的AuthenticationHandler(包路径改变)中authenticate方法返回boolean值，4.0版本AuthenticationHandler中返回的是HandlerResult
+ *
+ * 主要的认证工作和服务器端返回值都在AuthenticationHandler的authenticate方法中完成，注意 getName和 supports 两个方法也需要重写
  */
 package org.jasig.cas.authentication;
 

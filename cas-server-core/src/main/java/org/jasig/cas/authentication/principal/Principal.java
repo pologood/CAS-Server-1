@@ -15,6 +15,12 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * 一个通用概念，代表一个经过认证的东西。这里是认证结果的封装
+ * 在这里是一个接口，SimplePrincipal是官方提供的一个实现。有两个方法 getId() 方法用于返回唯一标识
+ *      Map<String, Object> getAttributes()可以在重写后返回其它的属性，但是需要修改
+ *      casServiceValidationSuccess.jsp，修改方法之前的文章中有过讲解,这里不再赘述
+ *      结果属性中Map<String, Object> Object尽量不要放集合，casServiceValidationSuccess.jsp不好修改
  */
 package org.jasig.cas.authentication.principal;
 

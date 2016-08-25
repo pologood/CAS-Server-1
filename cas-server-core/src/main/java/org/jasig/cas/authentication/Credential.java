@@ -15,6 +15,9 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * 配置位置 login-webflow.xml
+ * 由登陆提交的信息封装成的认证凭证，主要需要定制的内容，注意修改时同时需要修改login-webflow 中 viewLoginForm 的 binder
  */
 package org.jasig.cas.authentication;
 
